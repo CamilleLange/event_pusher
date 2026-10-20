@@ -1,0 +1,7 @@
+# Dev config for the docker compose stack: hosts are the compose service names.
+LogLevel: debug
+
+TickInterval: 1ms
+
+Nats:
+  URL: nats://nats:4222

@@ -1,0 +1,83 @@
+name: event_pusher
+
+x-event-pusher: &event-pusher
+  build: .
+  image: event_pusher:local
+  depends_on:
+    nats:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+    minio:
+      condition: service_healthy
+  restart: unless-stopped
+
+services:
+  nats:
+    image: nats:2.11-alpine
+    # -js active JetStream, -sd le répertoire de stockage des streams, -m le monitoring HTTP.
+    command: ["-js", "-sd", "/data", "-m", "8222"]
+    ports:
+      - "4222:4222" # clients
+      - "8222:8222" # monitoring (http://localhost:8222/jsz pour JetStream)
+    volumes:
+      - nats-data:/data
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8222/healthz?js-enabled-only=true"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    # Les Redis Streams (XADD, XREADGROUP, ...) sont natifs depuis Redis 5.
+    image: redis:8-alpine
+    # AOF pour ne pas perdre les streams au redémarrage du conteneur.
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  minio:
+    # Les images officielles MinIO ne sont plus pullables : fork communautaire pgsty, drop-in.
+    image: pgsty/minio:RELEASE.2026-08-04T00-00-00Z
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000" # API S3
+      - "9001:9001" # console web
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  producer:
+    <<: *event-pusher
+    command: ["producer", "--config=/config/producer.yaml"]
+    # Only needs NATS (overrides the shared depends_on).
+    depends_on:
+      nats:
+        condition: service_healthy
+    volumes:
+      - ./config/dev/producer.yaml:/config/producer.yaml:ro
+
+  service:
+    <<: *event-pusher
+    command: ["service", "--config=/config/event_pusher.yaml"]
+    volumes:
+      - ./config/dev/event_pusher.yaml:/config/event_pusher.yaml:ro
+
+volumes:
+  nats-data:
+  redis-data:
+  minio-data:

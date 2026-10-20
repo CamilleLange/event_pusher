@@ -1,0 +1,19 @@
+# Dev config for the docker compose stack: hosts are the compose service names.
+LogLevel: debug
+
+RedisStreamLimit: 100_000
+
+Nats:
+  URL: nats://nats:4222
+
+Redis:
+  Addr: redis:6379
+
+S3:
+  ClientType: S3
+  Endpoint: minio:9000
+  Region: us-east-1
+  Bucket: events
+  AccessKey: minioadmin
+  SecretKey: minioadmin
+  UseSSL: false

@@ -1,0 +1,6 @@
+.git
+bin/
+Dockerfile
+docker-compose.yml
+Makefile
+*.out
