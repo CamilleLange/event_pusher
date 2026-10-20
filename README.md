@@ -4,7 +4,7 @@ POC exploring how Kafka could be replaced by **NATS JetStream** and **Redis Stre
 
 ## Requirements
 
-- Go 1.25+
+- Go 1.26+
 - Docker with Compose v2
 
 ## Quick start
