@@ -3,7 +3,6 @@ package eventpusher
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log/slog"
 	"strconv"
@@ -11,6 +10,8 @@ import (
 	"test/event_pusher/pkg/services/nats"
 	"test/event_pusher/pkg/services/redis"
 	"test/event_pusher/pkg/services/s3"
+
+	"github.com/bytedance/sonic"
 )
 
 // App runs the event pusher service until its context is cancelled.
@@ -139,7 +140,7 @@ func (a *App) createRedisStream(ctx context.Context) error {
 
 	a.AvailableRedisStreams = append(a.AvailableRedisStreams, newStreamName)
 
-	data, err := json.Marshal(a.AvailableRedisStreams)
+	data, err := sonic.Marshal(a.AvailableRedisStreams)
 	if err != nil {
 		return fmt.Errorf("can't marshal available stream list : %w", err)
 	}

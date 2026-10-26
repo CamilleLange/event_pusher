@@ -2,12 +2,13 @@ package eventpusher
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log/slog"
 	"slices"
 	"test/event_pusher/pkg/model"
 	"test/event_pusher/pkg/services/nats"
+
+	"github.com/bytedance/sonic"
 )
 
 // HandleAvailableStreamListEvent by updating local list and finding the new current index, always trusting the event list.
@@ -19,7 +20,7 @@ func (a *App) HandleAvailableStreamListEvent(ctx context.Context, subject string
 	)
 
 	var availablestreamList model.AvailableStreamListEvent
-	if err := json.Unmarshal(data, &availablestreamList); err != nil {
+	if err := sonic.Unmarshal(data, &availablestreamList); err != nil {
 		return fmt.Errorf("can't unmarshal event : %w", err)
 	}
 

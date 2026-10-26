@@ -8,6 +8,8 @@ import (
 	"slices"
 	"test/event_pusher/pkg/model"
 	"test/event_pusher/pkg/services/nats"
+
+	"github.com/bytedance/sonic"
 )
 
 func (a *App) HandleApplicationEvent(ctx context.Context, subject string, data []byte) error {
@@ -18,7 +20,7 @@ func (a *App) HandleApplicationEvent(ctx context.Context, subject string, data [
 	)
 
 	msg := make([]json.RawMessage, 0)
-	if err := json.Unmarshal(data, &msg); err != nil {
+	if err := sonic.Unmarshal(data, &msg); err != nil {
 		a.logger.WarnContext(ctx, "can't unmarshal message", slog.String("err", err.Error()))
 		return fmt.Errorf("can't unmarshal message : %w", err)
 	}
@@ -123,7 +125,7 @@ func (a *App) notifyStreamFull(ctx context.Context, streamName string) error {
 		a.CurrentStreamIndex.Store(0)
 	}
 
-	data, err := json.Marshal(a.AvailableRedisStreams)
+	data, err := sonic.Marshal(a.AvailableRedisStreams)
 	if err != nil {
 		return fmt.Errorf("can't marshal updated available stream list : %w", err)
 	}
@@ -132,7 +134,7 @@ func (a *App) notifyStreamFull(ctx context.Context, streamName string) error {
 		a.logger.WarnContext(ctx, "can't publish stream full message", slog.String("err", err.Error()))
 	}
 
-	data, err = json.Marshal(model.StreamFullEvent{
+	data, err = sonic.Marshal(model.StreamFullEvent{
 		Name: streamName,
 	})
 	if err != nil {

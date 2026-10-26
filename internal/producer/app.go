@@ -4,12 +4,13 @@ package producer
 import (
 	"context"
 	"crypto/rand"
-	"encoding/json"
 	"fmt"
 	"log/slog"
 	"math/big"
 	"test/event_pusher/pkg/services/nats"
 	"time"
+
+	"github.com/bytedance/sonic"
 )
 
 // App runs the producer until its context is cancelled.
@@ -96,7 +97,7 @@ func (a *App) sendMessage(ctx context.Context, t time.Time) {
 		})
 	}
 
-	data, err := json.Marshal(payload)
+	data, err := sonic.Marshal(payload)
 	if err != nil {
 		a.logger.WarnContext(ctx, "can't marshal message batch", slog.String("err", err.Error()))
 	}

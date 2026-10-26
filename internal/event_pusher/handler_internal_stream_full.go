@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
-	"encoding/json"
 	"fmt"
 	"log/slog"
 	"test/event_pusher/pkg/model"
 	"test/event_pusher/pkg/services/nats"
 	"time"
+
+	"github.com/bytedance/sonic"
 )
 
 func (a *App) HandleStreamFullEvent(ctx context.Context, subject string, data []byte) error {
@@ -20,7 +21,7 @@ func (a *App) HandleStreamFullEvent(ctx context.Context, subject string, data []
 	)
 
 	var msg model.StreamFullEvent
-	if err := json.Unmarshal(data, &msg); err != nil {
+	if err := sonic.Unmarshal(data, &msg); err != nil {
 		return fmt.Errorf("can't unmarshal stream full message : %w", err)
 	}
 
@@ -67,7 +68,7 @@ func (a *App) HandleStreamFullEvent(ctx context.Context, subject string, data []
 
 	a.AvailableRedisStreams = append(a.AvailableRedisStreams, msg.Name)
 
-	data, err = json.Marshal(a.AvailableRedisStreams)
+	data, err = sonic.Marshal(a.AvailableRedisStreams)
 	if err != nil {
 		return fmt.Errorf("can't marshal available stream list : %w", err)
 	}
