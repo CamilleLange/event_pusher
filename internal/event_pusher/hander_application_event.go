@@ -62,27 +62,10 @@ func (a *App) HandleApplicationEvent(ctx context.Context, subject string, data [
 	} else if count < limit {
 		elToSave := limit - count // here we know that elToSave < len(msg)
 
-		if err := a.redisClient.InsertBatch(ctx, currentStream, msg[:elToSave]); err != nil {
-			return fmt.Errorf("can't insert each partial batch in the redis stream : %w", err)
+		if err := a.partialRedisInsert(ctx, currentStream, msg, elToSave); err != nil {
+			return fmt.Errorf("can't do a partial redis insert : %w", err)
 		}
 
-		if err := a.notifyStreamFull(ctx, currentStream); err != nil {
-			return fmt.Errorf("can't notify stream is full : %w", err)
-		}
-
-		// stream was refreshed.
-		currentStream = a.getCurrentSteam()
-
-		if err := a.redisClient.InsertBatch(ctx, currentStream, msg[elToSave:]); err != nil {
-			return fmt.Errorf("can't insert each partial batch in the redis stream : %w", err)
-		}
-
-		a.logger.InfoContext(ctx,
-			"batch inserted !",
-			slog.String("redis_stream", currentStream),
-			slog.String("stream", nats.APPLICATION_STREAM),
-			slog.String("subject", nats.APPLICATION_EVENT_SUBJECT),
-		)
 	} else {
 		if err := a.notifyStreamFull(ctx, currentStream); err != nil {
 			return fmt.Errorf("can't notify stream is full : %w", err)
@@ -91,6 +74,31 @@ func (a *App) HandleApplicationEvent(ctx context.Context, subject string, data [
 		return ErrStreamFull
 	}
 
+	return nil
+}
+
+func (a *App) partialRedisInsert(ctx context.Context, currentStream string, msg []json.RawMessage, elToSave int) error {
+	if err := a.redisClient.InsertBatch(ctx, currentStream, msg[:elToSave]); err != nil {
+		return fmt.Errorf("can't insert each partial batch in the redis stream : %w", err)
+	}
+
+	if err := a.notifyStreamFull(ctx, currentStream); err != nil {
+		return fmt.Errorf("can't notify stream is full : %w", err)
+	}
+
+	// stream was refreshed.
+	currentStream = a.getCurrentSteam()
+
+	if err := a.redisClient.InsertBatch(ctx, currentStream, msg[elToSave:]); err != nil {
+		return fmt.Errorf("can't insert each partial batch in the redis stream : %w", err)
+	}
+
+	a.logger.InfoContext(ctx,
+		"batch inserted !",
+		slog.String("redis_stream", currentStream),
+		slog.String("stream", nats.APPLICATION_STREAM),
+		slog.String("subject", nats.APPLICATION_EVENT_SUBJECT),
+	)
 	return nil
 }
 
