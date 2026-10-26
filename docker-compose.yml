@@ -73,7 +73,7 @@ services:
     ports:
       - "3100:3100"
     volumes:
-      - ./docker/loki.yaml:/etc/loki/local-config.yaml:ro
+      - ./config/loki.yaml:/etc/loki/local-config.yaml:ro
       - loki_data:/loki
     command: -config.file=/etc/loki/local-config.yaml
     restart: unless-stopped
@@ -81,7 +81,7 @@ services:
   promtail:
     image: grafana/promtail:latest
     volumes:
-      - ./docker/promtail.yaml:/etc/promtail/config.yaml:ro
+      - ./config/promtail.yaml:/etc/promtail/config.yaml:ro
       - /var/run/docker.sock:/var/run/docker.sock
     command: -config.file=/etc/promtail/config.yaml
     depends_on:
@@ -93,8 +93,8 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./docker/grafana/provisioning:/etc/grafana/provisioning:ro
-      - ./docker/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - ./config/grafana/provisioning:/etc/grafana/provisioning:ro
+      #- ./config/grafana/dashboards:/var/lib/grafana/dashboards:ro
       - grafana_data:/var/lib/grafana
     environment:
       - GF_AUTH_ANONYMOUS_ENABLED=true
