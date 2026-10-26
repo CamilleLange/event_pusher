@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/viper"
 
 	"test/event_pusher/internal/config/confighelper"
+	"test/event_pusher/internal/telemetry"
 	"test/event_pusher/pkg/services/nats"
 	"test/event_pusher/pkg/services/redis"
 	"test/event_pusher/pkg/services/s3"
@@ -15,8 +16,9 @@ import (
 
 // Config is the configuration of the `service` command.
 type Config struct {
-	LogLevel         string `mapstructure:"LogLevel"`
-	RedisStreamLimit int    `mapstructure:"RedisStreamLimit"`
+	LogLevel         string           `mapstructure:"LogLevel"`
+	Telemetry        telemetry.Config `mapstructure:"Telemetry"`
+	RedisStreamLimit int              `mapstructure:"RedisStreamLimit"`
 
 	Nats  nats.Config  `mapstructure:"Nats"`
 	Redis redis.Config `mapstructure:"Redis"`
@@ -28,6 +30,9 @@ func FlagSet(defaultConfig Config) *pflag.FlagSet {
 	fs := pflag.NewFlagSet("service", pflag.ContinueOnError)
 
 	fs.String("LogLevel", defaultConfig.LogLevel, "log level (debug, info, warn, error)")
+
+	fs.AddFlagSet(confighelper.PrefixFlagSet(telemetry.FlagSet(defaultConfig.Telemetry), "Telemetry"))
+
 	fs.Int("RedisStreamLimit", defaultConfig.RedisStreamLimit, "the limit of each redis stream (also the number of lines of each file in the S3)")
 
 	fs.AddFlagSet(confighelper.PrefixFlagSet(nats.FlagSet(defaultConfig.Nats), "Nats"))
