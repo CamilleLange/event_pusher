@@ -3,6 +3,7 @@ package eventpusher
 import (
 	"fmt"
 	"log/slog"
+	"test/event_pusher/internal/telemetry"
 	"test/event_pusher/pkg/services/nats"
 	"test/event_pusher/pkg/services/redis"
 	"test/event_pusher/pkg/services/s3"
@@ -10,6 +11,8 @@ import (
 
 // New builds the event pusher application.
 func New(cfg *Config, logger *slog.Logger) (*App, error) {
+	tracer := telemetry.For("event_pusher")
+
 	nc, err := nats.New(&cfg.Nats)
 	if err != nil {
 		return nil, fmt.Errorf("can't create nats client : %w", err)
@@ -28,6 +31,7 @@ func New(cfg *Config, logger *slog.Logger) (*App, error) {
 	return &App{
 		cfg:         cfg,
 		logger:      logger,
+		tracer:      tracer,
 		natsClient:  nc,
 		redisClient: rc,
 		s3Client:    sc,
